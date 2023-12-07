@@ -1,29 +1,29 @@
-{% extends 'main/base.html' %}
-{% block content %}
-<section class="vh-100 gradient-custom " >
+{% extends 'main/base.html' %} {% block content %}
+<section class="vh-100 gradient-custom bg-dark">
   <div class="container py-5 h-100">
     <div class="row d-flex justify-content-center align-items-center h-100">
       <div class="col col-xl-10">
-
-        <div class="card">
+        <div class="card bg-dark text-white">
           <div class="card-body p-5">
-
-              <form class="d-flex justify-content-center align-items-center mb-4" action="" method="POST">
-                  {% csrf_token %}
-                  <div class="form-outline flex-fill">
-                      <!-- <input type="text" id="form3" class="form-control form-control-lg" /> -->
-                    {{form.name}}
-                  </div>
-                  <button type="submit" class="btn btn-primary btn-lg ms-2">Update</button>
-                </form>
-
+            <form
+              class="d-flex justify-content-center align-items-center mb-4"
+              action=""
+              method="POST"
+            >
+              {% csrf_token %}
+              <div class="form-outline flex-fill">
+                <!-- <input type="text" id="form3" class="form-control form-control-lg" /> -->
+                {{form.name}}
+              </div>
+              <button type="submit" class="btn btn-primary btn-lg ms-2">
+                Add
+              </button>
+            </form>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 </section>
 
 {% endblock %}
-    

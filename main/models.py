@@ -8,7 +8,7 @@ class Date(models.Model):
         ordering = ['-now']
 
     def __str__(self) -> str:
-        return self.now.strftime("%d %m %Y")
+        return self.now.strftime("%d-%m-%Y")
 
 # Create your models here.
 class Task(models.Model):
