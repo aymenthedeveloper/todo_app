@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.views import View
 
 
 def login_user(request):
@@ -42,6 +43,38 @@ def logout_user(request):
     return redirect('login_user')
 
 
+class Home(View):
+    template_name = 'main/index_copy.html'
+    def get(self, request):
+        if request.user.is_authenticated:
+            q = request.GET.get('q')
+            current_user = request.user
+            dates = Date.objects.filter(user=current_user)
+            if q:
+                tasks = {date:date.task_set.filter(completed=q) for date in dates}
+            else:
+                tasks = {date:date.task_set.all() for date in dates}
+            form = TaskForm()
+            context = {'tasks': tasks, 'form':form}
+            return render(request, 'main/index_copy.html', context)
+        else:
+            return redirect('login_user')
+    def post(self, request):
+        task = TaskForm(request.POST)
+        current_user = request.user
+        dates = Date.objects.filter(user=current_user)
+        if task.is_valid():
+            task = task.save(commit=False)
+            today, created = Date.objects.get_or_create(user=current_user, now=date.today())
+            task.user = current_user
+            task.date = today
+            task.save()
+            [d.delete() for d in dates if not d.task_set.all()]
+            return redirect('home')
+        context = {'form':task}
+        return render(request, 'main/index_copy.html', context)
+
+
 @login_required(login_url='login_user')
 def home(request):
     q = request.GET.get('q')
@@ -53,41 +86,24 @@ def home(request):
         tasks = {date:date.task_set.all() for date in dates}
     form = TaskForm()
     if request.method == 'POST':
-        task = TaskForm(request.POST)
-        if task.is_valid():
-            task = task.save(commit=False)
+        form = TaskForm(request.POST)
+        if form.is_valid():
+            form = form.save(commit=False)
             today, created = Date.objects.get_or_create(user=current_user, now=date.today())
-            task.user = current_user
-            task.date = today
-            task.save()
+            form.user = current_user
+            form.date = today
+            form.save()
             [d.delete() for d in dates if not d.task_set.all()]
             return redirect('home')
     context = {'tasks': tasks, 'form':form}
     return render(request, 'main/index_copy.html', context)
 
 
-# @login_required(login_url='login_user')
-# def home_(request):
-#     q = request.GET.get('q')
-#     dates = Date.date_set.all()
-#     if q:
-#         tasks = {date_today:date_today.task_set.filter(completed=q) for date_today in dates}
-#     else:
-#         tasks = {date_today:date_today.task_set.all() for date_today in dates}
-#     form = TaskForm()
-#     if request.method == 'POST':
-#         task = TaskForm(request.POST)
-#         if task.is_valid():
-#             task = task.save(commit=False)
-#             today = Date.objects.filter(now=date.today())
-#             today = Date.objects.get_or_create(now=date.today())
-#             if today:
-#                 task.date = today[0]
-#             [d.delete() for d in dates if not d.task_set.all()]
-#             task.save()
-#             return redirect('home')
-#     context = {'tasks': tasks, 'form':form}
-#     return render(request, 'main/index_copy.html', context)
+@login_required(login_url='login_user')
+def user_profile(request):
+    user = request.user
+    context = {'user':user}
+    return render(request, 'main/user_profile.html', context)
 
 
 @login_required(login_url='login_user')

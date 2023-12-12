@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
 
+
 class TaskForm(forms.ModelForm):
     name = forms.CharField(label="", widget=forms.TextInput(attrs={
         'class': 'form-control form-control-lg',
@@ -12,6 +13,13 @@ class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
         fields = ['name']
+    
+    def clean_name(self):
+        taskname = self.cleaned_data.get("name")
+        if taskname.isalnum():
+            return taskname
+        else:
+            raise forms.ValidationError('a task name can only be alphanumeric!')
 
 
 class SignUpForm(UserCreationForm):
