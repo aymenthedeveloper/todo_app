@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.urls import reverse
 
 
 class Date(models.Model):
@@ -26,3 +27,6 @@ class Task(models.Model):
 
     class Meta:
         ordering = ['completed', '-updated']
+
+    def get_absolute_url(self):
+        return reverse('complete_task', kwargs={"pk": self.id})

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Task, Date
-from .forms import TaskForm, SignUpForm
+from .forms import TaskForm, SignUpForm, UserEditForm
 from datetime import date
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -131,3 +131,16 @@ def edit_task(request, pk):
             task.save()
             return redirect('home')
     return render(request, 'main/edit.html', {'form':form})
+
+
+@login_required(login_url='login_user')
+def update_user(request):
+    form = UserEditForm(instance=request.user)
+    if request.method == 'POST':
+        form = UserEditForm(request.POST ,instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('user_profile')
+    return render(request, 'main/edit_user.html', {'form':form})
+
+

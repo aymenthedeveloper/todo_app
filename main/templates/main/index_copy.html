@@ -88,7 +88,7 @@
                     <div class="d-flex align-items-center">
                       {% if not task.completed %}
                       <a
-                        href="{% url 'complete_task' task.id %}"
+                        href="{{ task.get_absolute_url }}"
                         data-mdb-toggle="tooltip"
                         title="edit task"
                         class="btn btn-light"
@@ -106,7 +106,7 @@
                       </a>
                       {{task.name}} {% else%}
                       <a
-                        href="{% url 'complete_task' task.id %}"
+                        href="{{ task.get_absolute_url }}"
                         data-mdb-toggle="tooltip"
                         title="edit task"
                         class="btn btn-light"
