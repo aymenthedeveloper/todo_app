@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Task, Date
-from .forms import TaskForm, SignUpForm, UserEditForm
+from .forms import TaskForm, SignUpForm, UserEditForm, RestPasswordForm
 from datetime import date
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -43,6 +43,23 @@ def activate(request, uidb64, token):
     else:
         messages.error(request, "Activation link is invalid!")
         return redirect('signup_user')
+    
+def reset_pw(request, uidb64, token):
+    uid = force_str(urlsafe_base64_decode(uidb64))
+    user = User.objects.get(id=uid)
+    if user and account_activation_token.check_token(user, token):
+        form = RestPasswordForm(user)
+        if request.method == 'POST':
+            form = RestPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'your password was changed successfully :)')
+                return redirect('home')
+            else:
+                for err in list(form.errors.values()):
+                    messages.error(request, f'{err}')
+                return redirect('reset_pw')
+        return render(request, 'main/password_reset.html', {'form':form})
 
 
 def activateEmail(request, user, to_email):
@@ -57,6 +74,22 @@ def activateEmail(request, user, to_email):
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
         messages.success(request, f'Dear {user}, check your email {to_email} inbox and click on received activation link to confirm and complete the registration.\nNote: Check your spam folder.')
+    else:
+        messages.error(request, f'Problem sending email to {to_email}, check if you typed it correctly.')
+
+
+def resetEmail(request, user, to_email):
+    mail_subject = "password reset"
+    message = render_to_string("main/template_email_reset_password.html", {
+        'username': user.username,
+        "protocol": 'https' if request.is_secure() else 'http',
+        'domain': get_current_site(request).domain,
+        'uid': urlsafe_base64_encode(force_bytes(user.id)),
+        'token': account_activation_token.make_token(user),
+    })
+    email = EmailMessage(mail_subject, message, to=[to_email])
+    if email.send():
+        messages.success(request, f'Dear {user}, check your email {to_email} inbox and click on received reset link to confirm and complete the registration.\nNote: Check your spam folder.')
     else:
         messages.error(request, f'Problem sending email to {to_email}, check if you typed it correctly.')
 
@@ -77,18 +110,36 @@ def signup_user(request):
     return render(request, 'main/signup_user.html', {'form': form})
 
 
-# def signup_user(request):
-#     form = SignUpForm()
-#     if request.method == 'POST':
-#         form = SignUpForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             messages.success(request, 'you have successfully signed up!')
-#             return redirect('home')
-#         else:
-#             messages.error(request, 'an error occured! please try again!')
-#             return redirect('signup_user')
-#     return render(request, 'main/signup_user.html', {'form': form})
+
+def password_reset(request):
+    user = request.user
+    if user.is_authenticated:
+        form = RestPasswordForm(user)
+        if request.method == 'POST':
+            form = RestPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'your password was changed successfully')
+                return redirect('home')
+            else:
+                for err in list(form.errors.values()):
+                    messages.error(request, f'{err}')
+                return redirect('password_reset')
+        return render(request, 'main/password_reset.html', {'form':form})
+    else:
+        if request.method == 'POST':
+            user_email = request.POST.get("email")
+            user = User.objects.filter(email=user_email).first()
+            if user:
+                resetEmail(request, user, user_email)
+                return redirect('home')
+            else:
+                messages.error(request, f"there are no user with this email: {user_email}")
+                return redirect('password_reset')
+        return render(request, 'main/pw_reset_email.html', {})
+
+
+
 
 
 def logout_user(request):
@@ -109,7 +160,7 @@ class Home(View):
                 tasks = {date:date.task_set.all() for date in dates}
             form = TaskForm()
             context = {'tasks': tasks, 'form':form}
-            return render(request, 'main/index_copy.html', context)
+            return render(request, 'main/index.html', context)
         else:
             return redirect('login_user')
     def post(self, request):
@@ -125,7 +176,7 @@ class Home(View):
             [d.delete() for d in dates if not d.task_set.all()]
             return redirect('home')
         context = {'form':task}
-        return render(request, 'main/index_copy.html', context)
+        return render(request, 'main/index.html', context)
 
 
 @login_required(login_url='login_user')
@@ -148,8 +199,12 @@ def home(request):
             form.save()
             [d.delete() for d in dates if not d.task_set.all()]
             return redirect('home')
+        else:
+            for err in list(form.errors.values()):
+                messages.error(request, f'{err}')
+            return redirect('home')
     context = {'tasks': tasks, 'form':form}
-    return render(request, 'main/index_copy.html', context)
+    return render(request, 'main/index.html', context)
 
 
 @login_required(login_url='login_user')
