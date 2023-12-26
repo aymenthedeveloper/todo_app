@@ -162,12 +162,13 @@ def regroup(quaryset):
 
 @login_required(login_url='login_user')
 def home_updated(request):
-    q = request.GET.get('q')
+    state = request.GET.get('state')
+    q = request.GET.get('q') if request.GET.get('q') else ''
     current_user = request.user
-    if q:
-        tasks = Task.objects.filter(user=current_user, completed=q)
+    if state:
+        tasks = Task.objects.filter(user=current_user, completed=state)
     else:
-        tasks = Task.objects.filter(user=current_user)
+        tasks = Task.objects.filter(user=current_user, name__icontains=q)
     tasks = regroup(tasks)
     form = TaskForm()
     if request.method == 'POST':
@@ -181,7 +182,7 @@ def home_updated(request):
             for err in list(form.errors.values()):
                 messages.error(request, f'{err}')
             return redirect('home')
-    context = {'tasks': tasks, 'form':form, "state":q}
+    context = {'tasks': tasks, 'form':form, "state":state}
     return render(request, 'main/index.html', context)
 
 
