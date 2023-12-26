@@ -3,16 +3,6 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 
 
-class Date(models.Model):
-    user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
-    now = models.DateField()
-
-    class Meta:
-        ordering = ['-now']
-
-    def __str__(self) -> str:
-        return self.now.strftime("%d-%m-%Y")
-
 
 
 class Task(models.Model):
@@ -20,7 +10,7 @@ class Task(models.Model):
     name = models.CharField(max_length=255)
     completed = models.BooleanField(default=False)
     updated = models.DateTimeField(auto_now=True)
-    date = models.ForeignKey(Date, null=True, on_delete=models.SET_NULL)
+    date = models.DateField(auto_now_add=True, null=True)
 
     def __str__(self) -> str:
         return f"{self.name}"

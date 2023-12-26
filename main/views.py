@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Task, Date
+from .models import Task
 from .forms import TaskForm, SignUpForm, UserEditForm, RestPasswordForm
 from datetime import date
 from django.contrib.auth import authenticate, login, logout
@@ -147,63 +147,41 @@ def logout_user(request):
     return redirect('login_user')
 
 
-class Home(View):
-    template_name = 'main/index_copy.html'
-    def get(self, request):
-        if request.user.is_authenticated:
-            q = request.GET.get('q')
-            current_user = request.user
-            dates = Date.objects.filter(user=current_user)
-            if q:
-                tasks = {date:date.task_set.filter(completed=q) for date in dates}
-            else:
-                tasks = {date:date.task_set.all() for date in dates}
-            form = TaskForm()
-            context = {'tasks': tasks, 'form':form}
-            return render(request, 'main/index.html', context)
-        else:
-            return redirect('login_user')
-    def post(self, request):
-        task = TaskForm(request.POST)
-        current_user = request.user
-        dates = Date.objects.filter(user=current_user)
-        if task.is_valid():
-            task = task.save(commit=False)
-            today, created = Date.objects.get_or_create(user=current_user, now=date.today())
-            task.user = current_user
-            task.date = today
-            task.save()
-            [d.delete() for d in dates if not d.task_set.all()]
-            return redirect('home')
-        context = {'form':task}
-        return render(request, 'main/index.html', context)
 
+
+
+def regroup(quaryset):
+    output = {}
+    for obj in quaryset:
+        key = obj.date
+        if key not in output:
+            output[key] = []
+        output[key].append(obj)
+    return output
+        
 
 @login_required(login_url='login_user')
-def home(request):
+def home_updated(request):
     q = request.GET.get('q')
     current_user = request.user
-    dates = Date.objects.filter(user=current_user)
     if q:
-        tasks = {date:date.task_set.filter(completed=q) for date in dates}
+        tasks = Task.objects.filter(user=current_user, completed=q)
     else:
-        tasks = {date:date.task_set.all() for date in dates}
+        tasks = Task.objects.filter(user=current_user)
+    tasks = regroup(tasks)
     form = TaskForm()
     if request.method == 'POST':
         form = TaskForm(request.POST)
         if form.is_valid():
             form = form.save(commit=False)
-            today, created = Date.objects.get_or_create(user=current_user, now=date.today())
             form.user = current_user
-            form.date = today
             form.save()
-            [d.delete() for d in dates if not d.task_set.all()]
             return redirect('home')
         else:
             for err in list(form.errors.values()):
                 messages.error(request, f'{err}')
             return redirect('home')
-    context = {'tasks': tasks, 'form':form}
+    context = {'tasks': tasks, 'form':form, "state":q}
     return render(request, 'main/index.html', context)
 
 
