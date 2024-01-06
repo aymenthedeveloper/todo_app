@@ -1,0 +1,30 @@
+{% extends 'main/base.html' %} 
+
+{% block content %}
+
+<section class="vh-100" style="background-color: #eee;">
+    <div class="container py-5 h-100 ">
+      <div class="row d-flex justify-content-center align-items-center h-100">
+        <div class="col-md-12 col-xl-4">
+  
+          <div class="card " style="border-radius: 15px;">
+            <div class="card-body text-center p-4">
+              <h2 class="mb-2">
+                Authentication token:
+              </h2>
+              <br>
+              <br>
+              <br>
+              <p>user this token to access your account through our api:</p>
+              <p>{{ token }}</p>
+              <br>
+              <p>note: dont forget to include it in every request you make to our api.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {% endblock content %}

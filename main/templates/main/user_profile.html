@@ -21,7 +21,8 @@
                 {{ user.username }}
                 {% endif %}
               </h4>
-              <p >{{ user.email }} <span class="mx-2">|</span> @{{ user.username }}</p>
+              <p >username: @{{ user.username }}</p>
+              <p >email: {{ user.email }}</p>
               <br>
               <!-- <div class="mb-4 pb-2">
                 <button type="button" class="btn btn-outline-primary btn-floating">
@@ -40,6 +41,9 @@
               <br>
               <a href="{% url 'password_reset' %}" class="btn btn-primary btn-rounded btn-lg my-1">
                 Reset password
+              </a>
+              <a href="{% url 'get_token' %}" class="btn btn-primary btn-rounded btn-lg my-1">
+                Get auth Token
               </a>
               <!-- <div class="d-flex justify-content-between text-center mt-5 mb-2">
                 <div>

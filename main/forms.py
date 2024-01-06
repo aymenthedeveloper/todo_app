@@ -13,13 +13,6 @@ class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
         fields = ['name']
-    
-    def clean_name(self):
-        taskname = self.cleaned_data.get("name")
-        if taskname.isalnum():
-            return taskname
-        else:
-            raise forms.ValidationError('a task name can only be alphanumeric!')
 
 
 class SignUpForm(UserCreationForm):
@@ -77,14 +70,18 @@ class UserEditForm(forms.ModelForm):
 
 
 class RestPasswordForm(SetPasswordForm):
+    old_password = forms.CharField(label="", max_length=100, widget=forms.PasswordInput(attrs={
+        'class': 'form-control form-control-lg',
+        'placeholder': 'enter your old password'
+    }))
     new_password1 = forms.CharField(label="", max_length=100, widget=forms.PasswordInput(attrs={
         'class': 'form-control form-control-lg',
         'placeholder': 'your new password'
     }))
     new_password2= forms.CharField(label="", max_length=100, widget=forms.PasswordInput(attrs={
         'class': 'form-control form-control-lg',
-        'placeholder': 'confirm password'
+        'placeholder': 'confirm new password'
     }))
     class Meta:
         model = User
-        fields = ('new_password1', 'new_password2')
+        fields = ('new_password1', 'new_password2', 'old_password')

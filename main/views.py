@@ -15,6 +15,8 @@ from django.utils.encoding import force_bytes, force_str
 from django.core.mail import EmailMessage
 from .tokens import account_activation_token
 
+from rest_framework.authtoken.models import Token
+
 
 def login_user(request):
     if request.user.is_authenticated:
@@ -38,8 +40,9 @@ def activate(request, uidb64, token):
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
         user.save()
+        login(request, user)
         messages.success(request, "Thank you for your email confirmation. Now you can login your account.")
-        return redirect('login_user')
+        return redirect('home')
     else:
         messages.error(request, "Activation link is invalid!")
         return redirect('signup_user')
@@ -73,7 +76,8 @@ def activateEmail(request, user, to_email):
     })
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
-        messages.success(request, f'Dear {user}, check your email {to_email} inbox and click on received activation link to confirm and complete the registration.\nNote: Check your spam folder.')
+        messages.success(request, f'Dear {user}, check your email {to_email} inbox and click on received activation link to confirm and complete the registration.')
+        messages.success(request, 'Note: Check your spam folder if you dont find you confirmation email in your main inbox.')
     else:
         messages.error(request, f'Problem sending email to {to_email}, check if you typed it correctly.')
 
@@ -118,9 +122,12 @@ def password_reset(request):
         if request.method == 'POST':
             form = RestPasswordForm(user, request.POST)
             if form.is_valid():
-                form.save()
-                messages.success(request, 'your password was changed successfully')
-                return redirect('home')
+                if user.check_password(request.POST.get('old_password')):
+                    form.save()
+                    messages.success(request, 'your password was changed successfully')
+                    return redirect('home')
+                messages.error(request, 'your old password is incorrect!')
+                return redirect('password_reset')
             else:
                 for err in list(form.errors.values()):
                     messages.error(request, f'{err}')
@@ -231,3 +238,7 @@ def update_user(request):
     return render(request, 'main/edit_user.html', {'form':form})
 
 
+@login_required(login_url='login_user')
+def get_token(request):
+    token = Token.objects.get_or_create(user=request.user)
+    return render(request, 'main/token.html', {'token':token[0]})
