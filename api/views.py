@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import authentication
 from rest_framework import permissions
 from django.contrib.sites.shortcuts import get_current_site
+from .permissions import IsOwnerPermission
 
 
 @api_view(['GET'])
@@ -47,12 +48,12 @@ class TaskDetailApiView(generics.RetrieveAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     authentication_classes = [authentication.SessionAuthentication, authentication.TokenAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerPermission]
     lookup_field = 'pk'
 
-    def get_queryset(self):
-        qs = super().get_queryset()
-        return qs.filter(user=self.request.user)
+    # def get_queryset(self):
+    #     qs = super().get_queryset()
+    #     return qs.filter(user=self.request.user)
 
 
 class TaskUpdateApiView(generics.UpdateAPIView):
