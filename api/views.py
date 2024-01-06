@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from main.models import Task
 from api.serializers import TaskSerializer
@@ -5,6 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import authentication
 from rest_framework import permissions
+from rest_framework import exceptions
 from django.contrib.sites.shortcuts import get_current_site
 from .permissions import IsOwnerPermission
 
@@ -51,9 +53,6 @@ class TaskDetailApiView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated, IsOwnerPermission]
     lookup_field = 'pk'
 
-    # def get_queryset(self):
-    #     qs = super().get_queryset()
-    #     return qs.filter(user=self.request.user)
 
 
 class TaskUpdateApiView(generics.UpdateAPIView):
@@ -66,7 +65,6 @@ class TaskUpdateApiView(generics.UpdateAPIView):
     def get_queryset(self):
         qs = super().get_queryset()
         return qs.filter(user=self.request.user)
-
 
 
 class TaskDeleteApiView(generics.DestroyAPIView):
